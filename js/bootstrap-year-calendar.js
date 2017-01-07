@@ -37,6 +37,7 @@
 			this.options = {
 				startYear: !isNaN(parseInt(opt.startYear)) ? parseInt(opt.startYear) : new Date().getFullYear(),
 				startMonth: !isNaN(parseInt(opt.startMonth)) ? parseInt(opt.startMonth) : 0,
+				navigationStepSize: !isNaN(parseInt(opt.navigationStepSize)) ? parseInt(opt.navigationStepSize) : 12,
 				minDate: opt.minDate instanceof Date ? opt.minDate : null,
 				maxDate: opt.maxDate instanceof Date ? opt.maxDate : null,
 				language: (opt.language != null && dates[opt.language] != null) ? opt.language : 'en',
@@ -44,7 +45,8 @@
 				displayWeekNumber: opt.displayWeekNumber != null ? opt.displayWeekNumber : false,
 				displayDisabledDataSource: opt.displayDisabledDataSource != null ? opt.displayDisabledDataSource : false,
 				displayHeader: opt.displayHeader != null ? opt.displayHeader : true,
-				alwaysHalfDay: opt.alwaysHalfDay != null ? opt.alwaysHalfDay : false,
+                displayMonthYear: opt.displayMonthYear != null ? opt.displayMonthYear : false,
+                alwaysHalfDay: opt.alwaysHalfDay != null ? opt.alwaysHalfDay : false,
 				enableRangeSelection: opt.enableRangeSelection != null ? opt.enableRangeSelection : false,
 				disabledDays: opt.disabledDays instanceof Array ? opt.disabledDays : [],
 				disabledWeekDays: opt.disabledWeekDays instanceof Array ? opt.disabledWeekDays : [],
@@ -194,7 +196,7 @@
             var year = this.options.startYear;
             month = this.options.startMonth + month;
 			if (month > 11) {
-				month -= 11;
+				month -= 12;
 				year++;
 			}
 
@@ -216,7 +218,12 @@
             var titleCell = $(document.createElement('th'));
             titleCell.addClass('month-title');
             titleCell.attr('colspan', this.options.displayWeekNumber ? 8 : 7);
-            titleCell.text(dates[this.options.language].months[month]);
+
+            var monthTitle = dates[this.options.language].months[month];
+            if (this.options.displayMonthYear) {
+				monthTitle += ' ' + year;
+			}
+            titleCell.text(monthTitle);
 
             titleRow.append(titleCell);
             thead.append(titleRow);
@@ -457,6 +464,7 @@
 			/* Header buttons */
 			this.element.find('.year-neighbor, .year-neighbor2').click(function() {
 				if(!$(this).hasClass('disabled')) {
+					_this.options.startMonth = 0;
 					_this.setYear(parseInt($(this).text()));
 				}
 			});
@@ -467,8 +475,16 @@
 						_this.element.find('.months-container').css('visibility', 'hidden');
 						_this.element.find('.months-container').css('margin-left', '0');
 						
-						setTimeout(function() { 
-							_this.setYear(_this.options.startYear - 1);
+						setTimeout(function() {
+                            var newStartMonth = _this.options.startMonth - _this.options.navigationStepSize;
+                            if (newStartMonth < 0) {
+                                _this.options.startMonth = 12 + newStartMonth;
+                                _this.setYear(_this.options.startYear - 1);
+                            }
+                            else {
+                                _this.options.startMonth = newStartMonth;
+                                _this.setYear(_this.options.startYear);
+                            }
 						}, 50);
 					});
 				}
@@ -481,7 +497,15 @@
 						_this.element.find('.months-container').css('margin-left', '0');
 						
 						setTimeout(function() {
-							_this.setYear(_this.options.startYear + 1);
+							var newStartMonth = _this.options.startMonth + _this.options.navigationStepSize;
+							if (newStartMonth > 11) {
+                                _this.options.startMonth = newStartMonth - 12;
+                                _this.setYear(_this.options.startYear + 1);
+                            }
+							else {
+                                _this.options.startMonth = newStartMonth;
+                                _this.setYear(_this.options.startYear);
+							}
 						}, 50);
 					});
 				}
